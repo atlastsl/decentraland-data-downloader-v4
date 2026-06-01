@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"slices"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -66,5 +67,8 @@ func main() {
 		hashes.Launch(decentraland.Decentraland, *nbParsers)
 	} else if *dataType == receipts.Argument {
 		receipts.Launch(decentraland.Decentraland, *nbParsers)
+	}
+	if os.Getenv("ENVIRONMENT") == "server" {
+		time.Sleep(time.Hour * 24)
 	}
 }
