@@ -6,12 +6,17 @@ import (
 	"decentraland-data-downloader-v4/packages/api"
 	"decentraland-data-downloader-v4/packages/database"
 	"decentraland-data-downloader-v4/packages/helpers"
+	"errors"
 	"strings"
 	"sync"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+)
+
+const (
+	downloadAttempts = 10
 )
 
 func getTransactionByHash(transactionHash string) (txInfo *api.EthTransaction, err error) {
@@ -21,13 +26,21 @@ func getTransactionByHash(transactionHash string) (txInfo *api.EthTransaction, e
 		"id":      time.Now().UnixMilli(),
 		"params":  []string{transactionHash},
 	}
-	txInfo = &api.EthTransaction{}
-	errHandler := api.InfuraRequest(payload, txInfo)
-	if errHandler.Err != nil {
-		err = errHandler.Err
-		return
+	for i := 0; i < downloadAttempts; i++ {
+		txInfo = &api.EthTransaction{}
+		errHandler := api.InfuraRequest(payload, txInfo)
+		if errHandler.Err != nil {
+			err = errHandler.Err
+			return
+		}
+		if txInfo == nil || txInfo.BlockNumber == nil {
+			time.Sleep(time.Millisecond * time.Duration(i+1) * 10)
+			continue
+		}
+		return txInfo, nil
 	}
-	return txInfo, nil
+	err = errors.New("failed to download transaction info " + transactionHash + " after " + string(rune(downloadAttempts)) + " attempts")
+	return
 }
 
 func getTransactionReceipt(transactionHash string) (txReceipt *api.EthTransactionReceipt, err error) {
@@ -37,13 +50,21 @@ func getTransactionReceipt(transactionHash string) (txReceipt *api.EthTransactio
 		"id":      time.Now().UnixMilli(),
 		"params":  []string{transactionHash},
 	}
-	txReceipt = &api.EthTransactionReceipt{}
-	errHandler := api.InfuraRequest(payload, txReceipt)
-	if errHandler.Err != nil {
-		err = errHandler.Err
-		return
+	for i := 0; i < downloadAttempts; i++ {
+		txReceipt = &api.EthTransactionReceipt{}
+		errHandler := api.InfuraRequest(payload, txReceipt)
+		if errHandler.Err != nil {
+			err = errHandler.Err
+			return
+		}
+		if txReceipt == nil || txReceipt.BlockNumber == nil || txReceipt.GasUsed == nil {
+			time.Sleep(time.Millisecond * time.Duration(i+1) * 10)
+			continue
+		}
+		return txReceipt, nil
 	}
-	return txReceipt, nil
+	err = errors.New("failed to download transaction receipt " + transactionHash + " after " + string(rune(downloadAttempts)) + " attempts")
+	return
 }
 
 func parseEthEventLog(eventLog *api.EthEventLog, blockchain string) *TransactionLog {
@@ -232,6 +253,7 @@ func DownloadTransactionData(hashInputs []*TransactionInput, _ *sync.WaitGroup) 
 	//			txLogs = append(txLogs, tTxLogs...)
 	//		}
 	//	}
+	//	time.Sleep(time.Millisecond * 100)
 	//}
 	//println(txInfos, txLogs)
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"decentraland-data-downloader-v4/core/hashes"
+	"decentraland-data-downloader-v4/core/receipts"
 
 	"github.com/joho/godotenv"
 )
@@ -11,5 +11,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	hashes.Test()
+	receipts.Test()
 }
