@@ -69,6 +69,7 @@ func (x DownloaderWorker) ParseData(worker *multithread.Worker, wg *sync.WaitGro
 						err := DownloadTransactionData(mainData.([]*TransactionInput), wg)
 
 						multithread.PublishTaskDoneNotification(worker, task, err)
+						time.Sleep(1 * time.Second)
 
 					}
 				}
