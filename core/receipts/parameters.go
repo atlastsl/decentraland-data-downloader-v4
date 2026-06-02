@@ -99,7 +99,7 @@ func getHashesFromDatabase(dbInstance *mongo.Database) (hashes map[string][]*Tra
 	return
 }
 
-const PartitionsNbItem = 100
+const PartitionsNbItem = 10
 
 func BuildParameters(dbInstance *mongo.Database) (map[string][]*TransactionInput, error) {
 	allTransactionsHashes, err := getHashesFromDatabase(dbInstance)

@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	downloadAttempts = 10
+	downloadAttempts = 1
 )
 
 func getTransactionByHash(transactionHash string) (txInfo *api.EthTransaction, err error) {
@@ -206,56 +206,56 @@ func SaveTransactionData(txInfos []*TransactionInfo, txLogs []*TransactionLog) e
 }
 
 func DownloadTransactionData(hashInputs []*TransactionInput, _ *sync.WaitGroup) error {
-	txInfos := make([]*TransactionInfo, 0)
-	txLogs := make([]*TransactionLog, 0)
-	allErrors := make([]error, 0)
-
-	parserWg := &sync.WaitGroup{}
-	dataLocker := &sync.RWMutex{}
-	for _, hashInput := range hashInputs {
-		parserWg.Add(1)
-		go func() {
-			defer parserWg.Done()
-			dataLocker.Lock()
-			txInfo, tTxLogs, err := downloadTransactionDataByHash(hashInput)
-			if err != nil {
-				allErrors = append(allErrors, err)
-			} else {
-				if txInfo != nil {
-					txInfos = append(txInfos, txInfo)
-				}
-				if tTxLogs != nil && len(tTxLogs) > 0 {
-					txLogs = append(txLogs, tTxLogs...)
-				}
-			}
-			dataLocker.Unlock()
-		}()
-	}
-	parserWg.Wait()
-
-	if len(allErrors) > 0 {
-		return allErrors[0]
-	}
-
-	_ = SaveTransactionData(txInfos, txLogs)
-
 	//txInfos := make([]*TransactionInfo, 0)
 	//txLogs := make([]*TransactionLog, 0)
+	//allErrors := make([]error, 0)
+	//
+	//parserWg := &sync.WaitGroup{}
+	//dataLocker := &sync.RWMutex{}
 	//for _, hashInput := range hashInputs {
-	//	txInfo, tTxLogs, err := downloadTransactionDataByHash(hashInput)
-	//	if err != nil {
-	//		return err
-	//	} else {
-	//		if txInfo != nil {
-	//			txInfos = append(txInfos, txInfo)
+	//	parserWg.Add(1)
+	//	go func() {
+	//		defer parserWg.Done()
+	//		dataLocker.Lock()
+	//		txInfo, tTxLogs, err := downloadTransactionDataByHash(hashInput)
+	//		if err != nil {
+	//			allErrors = append(allErrors, err)
+	//		} else {
+	//			if txInfo != nil {
+	//				txInfos = append(txInfos, txInfo)
+	//			}
+	//			if tTxLogs != nil && len(tTxLogs) > 0 {
+	//				txLogs = append(txLogs, tTxLogs...)
+	//			}
 	//		}
-	//		if tTxLogs != nil && len(tTxLogs) > 0 {
-	//			txLogs = append(txLogs, tTxLogs...)
-	//		}
-	//	}
-	//	time.Sleep(time.Millisecond * 100)
+	//		dataLocker.Unlock()
+	//	}()
 	//}
+	//parserWg.Wait()
+	//
+	//if len(allErrors) > 0 {
+	//	return allErrors[0]
+	//}
+
+	txInfos := make([]*TransactionInfo, 0)
+	txLogs := make([]*TransactionLog, 0)
+	for _, hashInput := range hashInputs {
+		txInfo, tTxLogs, err := downloadTransactionDataByHash(hashInput)
+		if err != nil {
+			return err
+		} else {
+			if txInfo != nil {
+				txInfos = append(txInfos, txInfo)
+			}
+			if tTxLogs != nil && len(tTxLogs) > 0 {
+				txLogs = append(txLogs, tTxLogs...)
+			}
+		}
+		time.Sleep(time.Millisecond * 1000)
+	}
 	//println(txInfos, txLogs)
+
+	_ = SaveTransactionData(txInfos, txLogs)
 
 	return nil
 }
